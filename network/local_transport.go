@@ -13,7 +13,7 @@ type LocalTransport struct {
 	sync.RWMutex
 }
 
-func NewLocalTransport(addr NetAddr) Transport {
+func NewLocalTransport(addr NetAddr) *LocalTransport {
 	return &LocalTransport{
 		addr:    addr,
 		consume: make(chan RPC, 1024),

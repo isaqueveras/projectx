@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-const timeTicker = time.Second * 1
+const timeTicker = time.Second * 5
 
 type (
 	ServerOpts struct {
