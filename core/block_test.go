@@ -2,7 +2,6 @@ package core
 
 import (
 	"bytes"
-	"fmt"
 	"testing"
 	"time"
 
@@ -10,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestHeader_Encode_Decode(t *testing.T) {
+func TestHeaderEncodeDecode(t *testing.T) {
 	h := &Header{
 		Version:   1,
 		PrevBlock: types.RandomHash(),
@@ -27,7 +26,7 @@ func TestHeader_Encode_Decode(t *testing.T) {
 	assert.Equal(t, h, hDecode)
 }
 
-func TestBlock_Encode_Decote(t *testing.T) {
+func TestBlockEncodeDecode(t *testing.T) {
 	b := &Block{
 		Header: Header{
 			Version:   1,
@@ -45,7 +44,6 @@ func TestBlock_Encode_Decote(t *testing.T) {
 	bDecode := &Block{}
 	assert.Nil(t, bDecode.DecodeBinary(buf))
 	assert.Equal(t, b, bDecode)
-	fmt.Printf("%+v", bDecode)
 }
 
 func TestBlockHash(t *testing.T) {
@@ -60,6 +58,5 @@ func TestBlockHash(t *testing.T) {
 	}
 
 	h := b.Hash()
-	fmt.Println(h)
 	assert.False(t, h.IsZero())
 }
