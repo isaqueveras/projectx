@@ -1,62 +1,47 @@
 package core
 
 import (
-	"bytes"
 	"testing"
 	"time"
 
+	"github.com/isaqueveras/projectx/crypto"
 	"github.com/isaqueveras/projectx/types"
 	"github.com/stretchr/testify/assert"
 )
 
-func TestHeaderEncodeDecode(t *testing.T) {
-	h := &Header{
-		Version:   1,
-		PrevBlock: types.RandomHash(),
-		Timestamp: time.Now().UnixNano(),
-		Height:    10,
-		Nonce:     956324,
-	}
+func randomBlock(height uint32) *Block {
+	var (
+		header = &Header{
+			Version:       1,
+			PrevBlockHash: types.RandomHash(),
+			Height:        height,
+			Timestamp:     time.Now().UnixNano(),
+		}
+		tx = Transaction{
+			Data: []byte("foo"),
+		}
+	)
 
-	buf := &bytes.Buffer{}
-	assert.Nil(t, h.EncodeBinary(buf))
-
-	hDecode := &Header{}
-	assert.Nil(t, hDecode.DecodeBinary(buf))
-	assert.Equal(t, h, hDecode)
+	return NewBlock(header, []Transaction{tx})
 }
 
-func TestBlockEncodeDecode(t *testing.T) {
-	b := &Block{
-		Header: Header{
-			Version:   1,
-			PrevBlock: types.RandomHash(),
-			Timestamp: time.Now().UnixNano(),
-			Height:    10,
-			Nonce:     956324,
-		},
-		Transaction: nil,
-	}
-
-	buf := &bytes.Buffer{}
-	assert.Nil(t, b.EncodeBinary(buf))
-
-	bDecode := &Block{}
-	assert.Nil(t, bDecode.DecodeBinary(buf))
-	assert.Equal(t, b, bDecode)
+func TestHashBlock(t *testing.T) {
+	privKey := crypto.GeneratePrivateKey()
+	b := randomBlock(0)
+	assert.Nil(t, b.Sign(privKey))
+	assert.NotNil(t, b.Signature)
 }
 
-func TestBlockHash(t *testing.T) {
-	b := &Block{
-		Header: Header{
-			Version:   1,
-			PrevBlock: types.RandomHash(),
-			Timestamp: time.Now().UnixNano(),
-			Height:    10,
-		},
-		Transaction: []Transaction{},
-	}
+func TestVerifyBlock(t *testing.T) {
+	privKey := crypto.GeneratePrivateKey()
+	b := randomBlock(0)
+	assert.Nil(t, b.Sign(privKey))
+	assert.NotNil(t, b.Signature)
 
-	h := b.Hash()
-	assert.False(t, h.IsZero())
+	otherPrivKey := crypto.GeneratePrivateKey()
+	b.Validator = otherPrivKey.PublicKey()
+	assert.NotNil(t, b.Verify())
+
+	b.Height = 100
+	assert.Nil(t, b.Verify())
 }
