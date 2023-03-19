@@ -3,6 +3,7 @@ package main
 import (
 	"time"
 
+	"github.com/isaqueveras/projectx/crypto"
 	"github.com/isaqueveras/projectx/network"
 )
 
@@ -23,12 +24,15 @@ func main() {
 	go func() {
 		for {
 			trLocal.SendMessage(trRemote.Addr(), []byte("Helley de Abreu Silva Batista"))
-			time.Sleep(time.Second * 2)
+			time.Sleep(time.Second)
 		}
 	}()
 
+	privKey := crypto.GeneratePrivateKey()
 	opts := network.ServerOpts{
 		Transports: []network.Transport{trLocal, trRemote},
+		BlockTime:  time.Second,
+		PrivateKey: &privKey,
 	}
 
 	server := network.NewServer(opts)
