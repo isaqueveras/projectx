@@ -1,6 +1,7 @@
 package core
 
 import (
+	"bytes"
 	"testing"
 
 	"github.com/isaqueveras/projectx/crypto"
@@ -29,6 +30,16 @@ func TestVerifyTransaction(t *testing.T) {
 	otherPrivKey := crypto.GeneratePrivateKey()
 	tx.From = otherPrivKey.PublicKey()
 	assert.NotNil(t, tx.Verify())
+}
+
+func TestTxEncodeDecode(t *testing.T) {
+	tx := randomTxWithSignature(t)
+	buf := &bytes.Buffer{}
+	assert.Nil(t, tx.Encode(NewGotTxEncoder(buf)))
+
+	txDecoded := new(Transaction)
+	assert.Nil(t, txDecoded.Decode(NewGobTxDecoder(buf)))
+	assert.Equal(t, tx, txDecoded)
 }
 
 func randomTxWithSignature(t *testing.T) *Transaction {

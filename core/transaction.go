@@ -2,20 +2,18 @@ package core
 
 import (
 	"fmt"
-	"io"
 
 	"github.com/isaqueveras/projectx/crypto"
 	"github.com/isaqueveras/projectx/types"
 )
 
 type Transaction struct {
-	Data []byte
-
+	Data      []byte
 	From      crypto.PublicKey
 	Signature *crypto.Signature
 
-	// cached version of the tx data hash
-	hash types.Hash
+	hash      types.Hash // cached version of the tx data hash
+	firstSeen int64      // firstSeen is the timestamp of when this tx is first seen locally
 }
 
 func NewTransaction(data []byte) *Transaction {
@@ -52,10 +50,18 @@ func (tx *Transaction) Verify() error {
 	return nil
 }
 
-func (tx *Transaction) EncodeBinary(w io.Writer) (err error) {
-	return
+func (tx *Transaction) Encode(dec Encoder[*Transaction]) (err error) {
+	return dec.Encode(tx)
 }
 
-func (tx *Transaction) DecodeBinary(r io.Reader) (err error) {
-	return
+func (tx *Transaction) Decode(dec Decoder[*Transaction]) (err error) {
+	return dec.Decode(tx)
+}
+
+func (tx *Transaction) SetFirstSeen(t int64) {
+	tx.firstSeen = t
+}
+
+func (tx *Transaction) FirstSeen() int64 {
+	return tx.firstSeen
 }

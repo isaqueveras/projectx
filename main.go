@@ -3,38 +3,50 @@ package main
 import (
 	"time"
 
-	"github.com/isaqueveras/projectx/crypto"
 	"github.com/isaqueveras/projectx/network"
+	"github.com/isaqueveras/projectx/types"
 )
 
 func main() {
+	// EP5: https://www.youtube.com/watch?v=kYJyzTkIZjg
+
 	trLocal := network.NewLocalTransport("LOCAL")
 	trRemote := network.NewLocalTransport("REMOTE")
+	trHome := network.NewLocalTransport("HOME")
 
 	trLocal.Connect(trRemote)
 	trRemote.Connect(trLocal)
+	trHome.Connect(trLocal)
+	trHome.Connect(trRemote)
 
 	go func() {
 		for {
-			trRemote.SendMessage(trLocal.Addr(), []byte("Ayrton Senna"))
+			a := types.RandomHash()
+			trRemote.SendMessage(trLocal.Addr(), []byte(a.String()))
 			time.Sleep(time.Second)
 		}
 	}()
 
 	go func() {
 		for {
-			trLocal.SendMessage(trRemote.Addr(), []byte("Helley de Abreu Silva Batista"))
+			a := types.RandomHash()
+			trLocal.SendMessage(trRemote.Addr(), []byte(a.String()))
 			time.Sleep(time.Second)
 		}
 	}()
 
-	privKey := crypto.GeneratePrivateKey()
+	go func() {
+		for {
+			a := types.RandomHash()
+			trHome.SendMessage(trLocal.Addr(), []byte(a.String()))
+			time.Sleep(time.Second)
+		}
+	}()
+
 	opts := network.ServerOpts{
-		Transports: []network.Transport{trLocal, trRemote},
+		Transports: []network.Transport{trLocal, trRemote, trHome},
 		BlockTime:  time.Second,
-		PrivateKey: &privKey,
 	}
 
-	server := network.NewServer(opts)
-	server.Start()
+	network.NewServer(opts).Start()
 }
