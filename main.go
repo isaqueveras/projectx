@@ -32,7 +32,8 @@ func main() {
 		Transports: []network.Transport{trLocal},
 	}
 
-	network.NewServer(opts).Start()
+	s := network.NewServer(opts)
+	s.Start()
 }
 
 func sendTransaction(tr network.Transport, to network.NetAddr) error {
