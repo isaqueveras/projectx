@@ -1,52 +1,49 @@
 package main
 
 import (
+	"bytes"
+	"math/rand"
+	"strconv"
 	"time"
 
+	"github.com/isaqueveras/projectx/core"
+	"github.com/isaqueveras/projectx/crypto"
 	"github.com/isaqueveras/projectx/network"
-	"github.com/isaqueveras/projectx/types"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
-	// EP5: https://www.youtube.com/watch?v=kYJyzTkIZjg
-
 	trLocal := network.NewLocalTransport("LOCAL")
 	trRemote := network.NewLocalTransport("REMOTE")
-	trHome := network.NewLocalTransport("HOME")
 
 	trLocal.Connect(trRemote)
 	trRemote.Connect(trLocal)
-	trHome.Connect(trLocal)
-	trHome.Connect(trRemote)
 
 	go func() {
 		for {
-			a := types.RandomHash()
-			trRemote.SendMessage(trLocal.Addr(), []byte(a.String()))
 			time.Sleep(time.Second)
-		}
-	}()
-
-	go func() {
-		for {
-			a := types.RandomHash()
-			trLocal.SendMessage(trRemote.Addr(), []byte(a.String()))
-			time.Sleep(time.Second)
-		}
-	}()
-
-	go func() {
-		for {
-			a := types.RandomHash()
-			trHome.SendMessage(trLocal.Addr(), []byte(a.String()))
-			time.Sleep(time.Second)
+			if err := sendTransaction(trRemote, trLocal.Addr()); err != nil {
+				logrus.Error(err)
+			}
 		}
 	}()
 
 	opts := network.ServerOpts{
-		Transports: []network.Transport{trLocal, trRemote, trHome},
-		BlockTime:  time.Second,
+		Transports: []network.Transport{trLocal},
 	}
 
 	network.NewServer(opts).Start()
+}
+
+func sendTransaction(tr network.Transport, to network.NetAddr) error {
+	tx := core.NewTransaction([]byte(strconv.FormatInt(int64(rand.Intn(1000000000)), 10)))
+	tx.Sign(crypto.GeneratePrivateKey())
+
+	buf := &bytes.Buffer{}
+	if err := tx.Encode(core.NewGotTxEncoder(buf)); err != nil {
+		return err
+	}
+
+	msg := network.NewMessage(network.MessageTypeTx, buf.Bytes())
+	return tr.SendMessage(to, msg.Bytes())
 }
